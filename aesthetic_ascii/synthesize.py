@@ -1,5 +1,7 @@
 from PIL import Image, ImageDraw, ImageFont
 import random
+from importlib import resources
+import io
 
 ASCII = '$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,"^`\'.'
 ASCII_DARK = '.\'`^",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$'
@@ -17,7 +19,9 @@ def get_image():
     # pick an image at random
     n = random.randint(0, len(IMAGES)-1)
     # open image
-    img = Image.open(f'../assets/images/{IMAGES[n]}')
+    with resources.open_binary('aesthetic_ascii', IMAGES[n]) as fp:
+        img = fp.read()
+    img = Image.open(io.BytesIO(img))
     # convert to grayscale and return
     return img.convert('L')
 
@@ -55,7 +59,11 @@ def resize_ascii(ascii_list, width):
 
 class Drive:
     def __init__(self):
-        pass
+        # open font resource
+        with resources.open_binary('aesthetic_ascii', 'RobotoMono-VariableFont_wght.ttf') as fp:
+            font = fp.read()
+        # initialize font
+        self.font = ImageFont.truetype(io.BytesIO(font))
 
     def generate(self, width=300, ascii_ratio=2, dark_mode=False):
         """Method that generates the ASCII image. Creates ASCII text image
@@ -100,8 +108,6 @@ class Drive:
         # set font and background color
         font_color = '#FFFFFF' if self.dark_mode else '#000000'
         color = '#000000' if self.dark_mode else '#FFFFFF'
-        # initialize font
-        font = ImageFont.truetype('../assets/fonts/RobotoMono-VariableFont_wght.ttf')
         # get required image width and height
         w = int(self.ascii_width * 6.1)
         h = int(self.ascii_height * 15.3)
@@ -109,6 +115,6 @@ class Drive:
         bg = Image.new('RGBA', (w, h), color)
         # draw text
         draw = ImageDraw.Draw(bg)
-        draw.text((15, 15), self.img, font=font, fill=font_color)
+        draw.text((15, 15), self.img, font=self.font, fill=font_color)
         # save as image
         bg.save(filepath)
